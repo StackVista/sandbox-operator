@@ -1,0 +1,7 @@
+apiVersion: devops.stackstate.com/v1
+kind: Sandbox
+metadata:
+    name: test-1
+spec:
+  user: jvanerp
+  slack_id: "23948483290489"

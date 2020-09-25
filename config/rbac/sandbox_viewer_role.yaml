@@ -1,0 +1,20 @@
+# permissions for end users to view sandboxes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sandbox-viewer-role
+rules:
+- apiGroups:
+  - devops.stackstate.com
+  resources:
+  - sandboxes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - devops.stackstate.com
+  resources:
+  - sandboxes/status
+  verbs:
+  - get

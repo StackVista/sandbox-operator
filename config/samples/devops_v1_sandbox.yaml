@@ -1,0 +1,7 @@
+apiVersion: devops.stackstate.com/v1
+kind: Sandbox
+metadata:
+  name: sandbox-sample
+spec:
+  # Add fields here
+  foo: bar

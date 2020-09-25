@@ -1,0 +1,12 @@
+domain: stackstate.com
+layout: go.kubebuilder.io/v2
+multigroup: true
+projectName: devopserator
+repo: gitlab.com/stackvista/devops/devopserator
+resources:
+- group: devops
+  kind: Sandbox
+  version: v1
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}
