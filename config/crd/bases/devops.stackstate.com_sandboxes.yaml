@@ -39,9 +39,6 @@ spec:
             slack_id:
               description: The SlackID of the User, used to notify the user of cleanups
               type: string
-            suffix:
-              description: The optional Suffix of the Sandbox name
-              type: string
             user:
               description: The username to create a Sandbox for
               type: string

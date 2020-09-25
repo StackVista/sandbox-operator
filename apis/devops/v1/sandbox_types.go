@@ -32,8 +32,6 @@ type SandboxSpec struct {
 	User string `json:"user"`
 	// The SlackID of the User, used to notify the user of cleanups
 	SlackId string `json:"slack_id"`
-	// The optional Suffix of the Sandbox name
-	Suffix string `json:"suffix,omitempty"`
 }
 
 // SandboxStatus defines the observed state of Sandbox

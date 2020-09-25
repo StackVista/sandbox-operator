@@ -97,11 +97,12 @@ func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 }
 
 func (r *SandboxReconciler) constructNamespaceName(sandbox *devopsv1.Sandbox) string {
-	name := fmt.Sprintf("user-%s", sandbox.Spec.User)
-
-	if strings.TrimSpace(sandbox.Spec.Suffix) != "" {
-		name = fmt.Sprintf("%s-%s", name, sandbox.Spec.Suffix)
+	name := "sandbox"
+	if !strings.HasPrefix(sandbox.Name, sandbox.Spec.User) {
+		name = fmt.Sprintf("%s-%s", name, sandbox.Spec.User)
 	}
+
+	name = fmt.Sprintf("%s-%s", name, sandbox.Name)
 
 	return name
 }
