@@ -16,6 +16,8 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
+GO_PKG = gitlab.com/StackVista/DevOps/devopserator
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -63,8 +65,21 @@ vet:
 	go vet ./...
 
 # Generate code
-generate: controller-gen
+generate: controller-gen generate-client
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+generate-client: client-gen
+	{ \
+	set -e ;\
+	if [ ! -d gopath ]; then mkdir gopath; fi ;\
+	cd gopath ;\
+	export GOPATH=$$(pwd) ;\
+	export GO111MODULE=on ;\
+	mkdir -p src/$(GO_PKG) ;\
+	cp -r  ${CURDIR}/apis ${CURDIR}/hack src/$(GO_PKG)/ ;\
+	client-gen --go-header-file $$PWD/src/$(GO_PKG)/hack/sts-boilerplate.go.txt -n versioned --input-dirs ./src/$(GO_PKG)/apis/devops/v1 --input-base "$(GO_PKG)/apis" --output-package $(GO_PKG)/pkg/client --input devops/v1 ;\
+	cp -r src/$(GO_PKG)/pkg ${CURDIR} ;\
+	}
 
 # Build the docker image
 docker-build: test
@@ -90,6 +105,22 @@ CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
+
+client-gen:
+ifeq (, $(shell which client-gen))
+	@{ \
+	set -e ;\
+	CLIENT_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$CLIENT_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get k8s.io/code-generator/cmd/client-gen@v0.19.2 ;\
+	rm -rf $$CLIENT_GEN_TMP_DIR ;\
+	}
+client_GEN=$(GOBIN)/client-gen
+else
+client_GEN=$(shell which client-gen)
+endif
+
 
 kustomize:
 ifeq (, $(shell which kustomize))
