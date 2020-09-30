@@ -23,6 +23,7 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+
 // SandboxSpec defines the desired state of Sandbox
 type SandboxSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -43,6 +44,8 @@ type SandboxStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=sandboxes,scope=Cluster
+// +genclient
+// +genclient:nonNamespaced
 
 // Sandbox is the Schema for the sandboxes API
 type Sandbox struct {
