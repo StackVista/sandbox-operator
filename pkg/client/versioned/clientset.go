@@ -5,7 +5,7 @@ package versioned
 import (
 	"fmt"
 
-	devopsv1 "gitlab.com/StackVista/DevOps/devopserator/pkg/client/versioned/typed/devops/v1"
+	devopsv1 "gitlab.com/stackvista/devops/devopserator/pkg/client/versioned/typed/devops/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

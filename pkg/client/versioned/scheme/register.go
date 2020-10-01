@@ -3,7 +3,7 @@
 package scheme
 
 import (
-	devopsv1 "gitlab.com/StackVista/DevOps/devopserator/apis/devops/v1"
+	devopsv1 "gitlab.com/stackvista/devops/devopserator/apis/devops/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

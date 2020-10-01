@@ -16,7 +16,7 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
-GO_PKG = gitlab.com/StackVista/DevOps/devopserator
+GO_PKG = gitlab.com/stackvista/devops/devopserator
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -33,7 +33,7 @@ test: generate fmt vet manifests
 
 # Build manager binary
 manager: generate fmt vet
-	go build -o bin/manager main.go
+	go build -o bin/devopserator main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run/%: generate fmt vet manifests
@@ -65,20 +65,20 @@ vet:
 	go vet ./...
 
 # Generate code
-generate: controller-gen generate-client
+generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 generate-client: client-gen
 	{ \
 	set -e ;\
-	if [ ! -d gopath ]; then mkdir gopath; fi ;\
-	cd gopath ;\
-	export GOPATH=$$(pwd) ;\
+	GENERATION_TMP_DIR=$$(mktemp -d) ;\
+	cd $$GENERATION_TMP_DIR ;\
 	export GO111MODULE=on ;\
 	mkdir -p src/$(GO_PKG) ;\
 	cp -r  ${CURDIR}/apis ${CURDIR}/hack src/$(GO_PKG)/ ;\
-	client-gen --go-header-file $$PWD/src/$(GO_PKG)/hack/sts-boilerplate.go.txt -n versioned --input-dirs ./src/$(GO_PKG)/apis/devops/v1 --input-base "$(GO_PKG)/apis" --output-package $(GO_PKG)/pkg/client --input devops/v1 ;\
+	GOPATH=$$(pwd) $(CLIENT_GEN) --go-header-file $$PWD/src/$(GO_PKG)/hack/sts-boilerplate.go.txt -n versioned --input-dirs ./src/$(GO_PKG)/apis/devops/v1 --input-base "$(GO_PKG)/apis" --output-package $(GO_PKG)/pkg/client --input devops/v1 ;\
 	cp -r src/$(GO_PKG)/pkg ${CURDIR} ;\
+	rm -rf $$GENERATION_TMP_DIR ;\
 	}
 
 # Build the docker image
@@ -116,9 +116,9 @@ ifeq (, $(shell which client-gen))
 	go get k8s.io/code-generator/cmd/client-gen@v0.19.2 ;\
 	rm -rf $$CLIENT_GEN_TMP_DIR ;\
 	}
-client_GEN=$(GOBIN)/client-gen
+CLIENT_GEN=$(GOBIN)/client-gen
 else
-client_GEN=$(shell which client-gen)
+CLIENT_GEN=$(shell which client-gen)
 endif
 
 

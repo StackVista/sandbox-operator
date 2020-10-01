@@ -3,9 +3,9 @@
 package fake
 
 import (
-	clientset "gitlab.com/StackVista/DevOps/devopserator/pkg/client/versioned"
-	devopsv1 "gitlab.com/StackVista/DevOps/devopserator/pkg/client/versioned/typed/devops/v1"
-	fakedevopsv1 "gitlab.com/StackVista/DevOps/devopserator/pkg/client/versioned/typed/devops/v1/fake"
+	clientset "gitlab.com/stackvista/devops/devopserator/pkg/client/versioned"
+	devopsv1 "gitlab.com/stackvista/devops/devopserator/pkg/client/versioned/typed/devops/v1"
+	fakedevopsv1 "gitlab.com/stackvista/devops/devopserator/pkg/client/versioned/typed/devops/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
