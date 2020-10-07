@@ -39,6 +39,10 @@ spec:
             slack_id:
               description: The SlackID of the User, used to notify the user of cleanups
               type: string
+            ttl:
+              description: The Time-To-Live for this sandbox, if not given, this is
+                up to the reaper
+              type: string
             user:
               description: The username to create a Sandbox for
               type: string
@@ -48,6 +52,35 @@ spec:
           type: object
         status:
           description: SandboxStatus defines the observed state of Sandbox
+          properties:
+            conditions:
+              description: Represents the latest available observations of a namespace's
+                current state.
+              items:
+                description: NamespaceCondition contains details about state of namespace.
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of namespace controller condition.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            phase:
+              description: 'Phase is the current lifecycle phase of the namespace.
+                More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/'
+              type: string
           type: object
       type: object
   version: v1

@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,10 +33,15 @@ type SandboxSpec struct {
 	User string `json:"user"`
 	// The SlackID of the User, used to notify the user of cleanups
 	SlackId string `json:"slack_id"`
+
+	// The Time-To-Live for this sandbox, if not given, this is up to the reaper
+	TTL *metav1.Duration `json:"ttl,omitempty"`
 }
 
 // SandboxStatus defines the observed state of Sandbox
 type SandboxStatus struct {
+	NamespaceStatus *v1.NamespaceStatus `json:",omitempty"`
+
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }

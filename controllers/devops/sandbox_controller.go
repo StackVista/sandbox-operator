@@ -23,6 +23,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -74,8 +75,7 @@ func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespaceName,
 				Labels: map[string]string{
-					"created-by": sandbox.Spec.User,
-					"slack-id":   sandbox.Spec.SlackId,
+					"sandboxer/created-by": sandbox.Spec.User,
 				},
 			},
 		}
@@ -89,7 +89,16 @@ func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			log.Error(err, "Error creating new Namespace")
 			return ctrl.Result{}, err
 		}
+
+		sandbox.Status.NamespaceStatus = &newNs.Status
+		if err := r.Status().Update(ctx, sandbox); err != nil {
+			return ctrl.Result{}, err
+		}
 	} else {
+		if sandbox.Status.NamespaceStatus != nil && sandbox.Status.NamespaceStatus.Phase == v1.NamespaceActive {
+			return ctrl.Result{}, nil
+		}
+
 		return ctrl.Result{}, fmt.Errorf("Namespace for sandbox already exists")
 	}
 

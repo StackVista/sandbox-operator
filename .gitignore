@@ -1,3 +1,4 @@
+.DS_Store
 
 # Binaries for programs and plugins
 *.exe
@@ -24,3 +25,5 @@ bin
 *~
 
 gopath/
+
+local_values.yaml
