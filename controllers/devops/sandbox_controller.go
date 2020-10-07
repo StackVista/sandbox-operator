@@ -30,7 +30,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	devopsv1 "gitlab.com/stackvista/devops/devopserator/apis/devops/v1"
+	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 )
 
 // SandboxReconciler reconciles a Sandbox object

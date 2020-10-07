@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"gitlab.com/stackvista/devops/devopserator/internal/sandbox"
+	"github.com/stackvista/sandbox-operator/internal/sandbox"
 
 	"github.com/spf13/cobra"
 )

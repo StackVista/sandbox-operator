@@ -3,8 +3,8 @@
 package v1
 
 import (
-	v1 "gitlab.com/stackvista/devops/devopserator/apis/devops/v1"
-	"gitlab.com/stackvista/devops/devopserator/pkg/client/versioned/scheme"
+	v1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
+	"github.com/stackvista/sandbox-operator/pkg/client/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

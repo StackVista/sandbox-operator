@@ -2,7 +2,7 @@ domain: stackstate.com
 layout: go.kubebuilder.io/v2
 multigroup: true
 projectName: devopserator
-repo: gitlab.com/stackvista/devops/devopserator
+repo: github.com/stackvista/sandbox-operator
 resources:
 - group: devops
   kind: Sandbox

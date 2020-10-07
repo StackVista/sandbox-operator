@@ -1,4 +1,4 @@
-module gitlab.com/stackvista/devops/devopserator
+module github.com/stackvista/sandbox-operator
 
 go 1.13
 

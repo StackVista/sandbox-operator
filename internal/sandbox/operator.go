@@ -9,12 +9,12 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	devopsv1 "gitlab.com/stackvista/devops/devopserator/apis/devops/v1"
+	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	devopscontroller "gitlab.com/stackvista/devops/devopserator/controllers/devops"
-	"gitlab.com/stackvista/devops/devopserator/internal/logr"
+	devopscontroller "github.com/stackvista/sandbox-operator/controllers/devops"
+	"github.com/stackvista/sandbox-operator/internal/logr"
 	// +kubebuilder:scaffold:imports
 )
 

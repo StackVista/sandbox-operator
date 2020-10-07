@@ -6,8 +6,8 @@ import (
 	"context"
 	"time"
 
-	v1 "gitlab.com/stackvista/devops/devopserator/apis/devops/v1"
-	scheme "gitlab.com/stackvista/devops/devopserator/pkg/client/versioned/scheme"
+	v1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
+	scheme "github.com/stackvista/sandbox-operator/pkg/client/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

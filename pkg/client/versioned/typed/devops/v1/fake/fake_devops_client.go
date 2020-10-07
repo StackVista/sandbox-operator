@@ -3,7 +3,7 @@
 package fake
 
 import (
-	v1 "gitlab.com/stackvista/devops/devopserator/pkg/client/versioned/typed/devops/v1"
+	v1 "github.com/stackvista/sandbox-operator/pkg/client/versioned/typed/devops/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

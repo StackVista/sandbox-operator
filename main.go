@@ -19,8 +19,8 @@ package main
 import (
 	"context"
 
-	"gitlab.com/stackvista/devops/devopserator/cmd"
-	logr "gitlab.com/stackvista/devops/devopserator/internal/logr"
+	"github.com/stackvista/sandbox-operator/cmd"
+	logr "github.com/stackvista/sandbox-operator/internal/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	devopsv1 "gitlab.com/stackvista/devops/devopserator/apis/devops/v1"
-	"gitlab.com/stackvista/devops/devopserator/pkg/client/versioned"
+	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
+	"github.com/stackvista/sandbox-operator/pkg/client/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/caspr-io/mu-kit/kubernetes"
 	"github.com/slack-go/slack"
-	"gitlab.com/stackvista/devops/devopserator/internal/logr"
+	"github.com/stackvista/sandbox-operator/internal/logr"
 )
 
 type Config struct {
