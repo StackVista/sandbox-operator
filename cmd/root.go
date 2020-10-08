@@ -8,13 +8,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "devopserator",
-	Short: "DevOps operator",
+func RootCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "sandboxer",
+		Short: "StackState Sandbox operator",
+	}
 }
 
 func Execute(ctx context.Context) {
-	if err := rootCmd.ExecuteContext(ctx); err != nil {
+	cmd := RootCommand()
+	cmd.AddCommand(SandboxCommand())
+	cmd.AddCommand(ReaperCommand())
+
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

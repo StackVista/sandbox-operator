@@ -9,12 +9,13 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/butonic/zerologr"
+	"github.com/rs/zerolog/log"
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	devopscontroller "github.com/stackvista/sandbox-operator/controllers/devops"
-	"github.com/stackvista/sandbox-operator/internal/logr"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -36,8 +37,10 @@ type OperatorConfig struct {
 }
 
 func StartOperator(ctx context.Context, config *OperatorConfig) error {
-	logger := logr.Ctx(ctx)
-	ctrl.SetLogger(logger)
+	logger := log.Ctx(ctx)
+	ctrl.SetLogger(zerologr.NewWithOptions(zerologr.Options{
+		Logger: logger,
+	}))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,

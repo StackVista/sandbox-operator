@@ -2,71 +2,72 @@ package reaper
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 	"github.com/stackvista/sandbox-operator/pkg/client/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/caspr-io/mu-kit/kubernetes"
-	"github.com/slack-go/slack"
-	"github.com/stackvista/sandbox-operator/internal/logr"
+	"github.com/stackvista/sandbox-operator/internal/slack"
 )
 
 type Config struct {
-	DefaultTtl         time.Duration `split_words:"true" required:"true" default:"604800s"` // Default 1 week
-	SlackApiKey        string        `split_words:"true" required:"true"`
-	SlackChannelID     string        `split_words:"true" required:"true"`
-	SlackPostAsUser    string        `split_words:"true" required:"false"`
-	SlackPostAsIconURL string        `split_words:"true" required:"false"`
-	SlackPostMessage   string        `split_words:"true" required:"true"`
+	DefaultTtl  time.Duration `split_words:"true" required:"true" default:"604800s"` // Default 1 week
+	ReapMessage string        `split_words:"true" required:"true"`
+	Slack       *slack.Config `split_words:"true" required:"true"`
 }
 
-func ReapNamespaces(ctx context.Context, config *Config) error {
-	logger := logr.Ctx(ctx)
+type Reaper struct {
+	sandboxClient *versioned.Clientset
+	config        *Config
+}
+
+func NewReaper(ctx context.Context, config *Config) (*Reaper, error) {
+	logger := log.Ctx(ctx)
 	k8s, err := kubernetes.ConnectToKubernetes()
-	if err != nil {
-		return err
-	}
-
-	logger.Info("Connected to Kubernetes")
-
-	sandboxes, err := listSandboxes(ctx, k8s)
-	if err != nil {
-		return err
-	}
-
-	for _, sb := range sandboxes {
-		if isExpired(ctx, sb, config.DefaultTtl) {
-			if err := deleteSandbox(ctx, k8s, sb); err != nil {
-				return err
-			}
-
-			if err := notifyDeletion(ctx, config, sb); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func deleteSandbox(ctx context.Context, k8s *kubernetes.K8s, sb devopsv1.Sandbox) error {
-	sandboxClient := versioned.New(k8s.Clientset.RESTClient())
-
-	return sandboxClient.DevopsV1().Sandboxes().Delete(ctx, sb.Name, v1.DeleteOptions{})
-}
-
-func listSandboxes(ctx context.Context, k8s *kubernetes.K8s) ([]devopsv1.Sandbox, error) {
-	sandboxClient := versioned.New(k8s.Clientset.RESTClient())
-
-	sbList, err := sandboxClient.DevopsV1().Sandboxes().List(ctx, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return sbList.Items, nil
+	logger.Info().Msg("Connected to Kubernetes")
+
+	return &Reaper{
+		sandboxClient: versioned.New(k8s.Clientset.RESTClient()),
+		config:        config,
+	}, nil
 }
 
+func (r *Reaper) Run(ctx context.Context) error {
+	logger := log.Ctx(ctx)
+
+	sandboxes, err := r.sandboxClient.DevopsV1().Sandboxes().List(ctx, v1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, sb := range sandboxes.Items {
+		logger.Debug().Str("sandbox", sb.Name).Msg("Inspecting Sandbox")
+
+		if isExpired(ctx, sb, r.config.DefaultTtl) {
+			logger.Info().Str("sandbox", sb.Name).Msg("Sandbox is expired.")
+
+			return r.deleteAndNotify(ctx, sb)
+		} // TODO almost expired, notify once per day
+	}
+
+	return nil
+}
+
+func (r *Reaper) deleteAndNotify(ctx context.Context, sb devopsv1.Sandbox) error {
+	if err := r.sandboxClient.DevopsV1().Sandboxes().Delete(ctx, sb.Name, v1.DeleteOptions{}); err != nil {
+		return err
+	}
+
+	return slack.NewSlacker(r.config.Slack).NotifyUser(sb.Spec.SlackId, "", r.config.ReapMessage)
+}
+
+// isExpired checks whether the given Sandbox has expired its TTL
 func isExpired(ctx context.Context, sb devopsv1.Sandbox, defaultTTL time.Duration) bool {
 	ttl := defaultTTL
 	if sb.Spec.TTL != nil {
@@ -74,28 +75,4 @@ func isExpired(ctx context.Context, sb devopsv1.Sandbox, defaultTTL time.Duratio
 	}
 
 	return sb.CreationTimestamp.Add(ttl).Before(time.Now())
-}
-
-func notifyDeletion(ctx context.Context, config *Config, sb devopsv1.Sandbox) error {
-	client := slack.New(config.SlackApiKey)
-
-	msg := fmt.Sprintf("<@%s>, "+config.SlackPostMessage, sb.Spec.SlackId, sb.Name)
-
-	msgOpts := []slack.MsgOption{
-		slack.MsgOptionText(msg, false),
-	}
-
-	if config.SlackPostAsUser != "" {
-		msgOpts = append(msgOpts, slack.MsgOptionUsername(config.SlackPostAsUser))
-	}
-
-	if config.SlackPostAsIconURL != "" {
-		msgOpts = append(msgOpts, slack.MsgOptionIconURL(config.SlackPostAsIconURL))
-	}
-
-	if _, _, err := client.PostMessage(config.SlackChannelID, msgOpts...); err != nil {
-		return err
-	}
-
-	return nil
 }

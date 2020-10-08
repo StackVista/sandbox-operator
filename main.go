@@ -19,17 +19,16 @@ package main
 import (
 	"context"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stackvista/sandbox-operator/cmd"
-	logr "github.com/stackvista/sandbox-operator/internal/logr"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )
 
 func main() {
-	logger := zap.New(zap.UseDevMode(true))
+	logger := log.Logger
 	ctx := context.Background()
 
-	ctx = logr.WithContext(ctx, logger)
+	ctx = logger.WithContext(ctx)
 
 	cmd.Execute(ctx)
 }

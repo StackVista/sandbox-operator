@@ -6,11 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(buildSandboxCommand())
-}
-
-func buildSandboxCommand() *cobra.Command {
+func SandboxCommand() *cobra.Command {
 	config := &sandbox.OperatorConfig{}
 
 	cmd := &cobra.Command{
