@@ -1,0 +1,25 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "fullname.short" . }}-cron
+spec:
+  schedule: {{ .Values.reaper.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: {{ include "fullname.short" . }}
+            image: {{ .Values.reaper.image }}
+            args:
+            - reaper
+            env:
+            - name: REAP_MESSAGE
+              value: {{ .Values.reaper.message }}
+            - name: SLACK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fullname.short" . }}-reaper-secret
+                  key: slackApiKey
+
+          restartPolicy: OnFailure

@@ -1,0 +1,25 @@
+
+sandboxer:
+  image: ghcr.io/stackvista/sandboxer:latest
+
+reaper:
+  image: ghcr.io/stackvista/sandboxer:latest
+
+  schedule: 0 0 * * *
+
+  # The default TTL for a Sandbox (default: 604800 sec = 1 week)
+  defaultTTL: 604800s
+
+  slack:
+    # The Slack API token
+    apiKey: ""
+    # The Slack Channel ID to post in (Can be an ID or the channel name prefixed with a '#')
+    channelID: ""
+
+    message:
+      # The message text to post to the Slack channel (must contain a single placeholder for the sandbox name)
+      text: "Your sandbox `%s` has been reaped..."
+      # The username to set for the post, if left empty uses the bot name of the API Token
+      user: ""
+      # The icon to set for the post, if left empty uses the bot icon of the API Token
+      icon: ""
