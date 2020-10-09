@@ -1,8 +1,6 @@
 name: Go
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -30,6 +28,3 @@ jobs:
 
     - name: Test
       run: go test -v .
-
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
