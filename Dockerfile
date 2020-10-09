@@ -23,6 +23,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o sandboxe
 # Use distroless as minimal base image to package the sandboxer binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
+LABEL org.opencontainers.image.source https://github.com/stackvista/sandbox-operator
 WORKDIR /
 COPY --from=builder /workspace/sandboxer .
 USER nonroot:nonroot
