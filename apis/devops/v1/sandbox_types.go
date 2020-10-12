@@ -34,13 +34,17 @@ type SandboxSpec struct {
 	// The SlackID of the User, used to notify the user of cleanups
 	SlackId string `json:"slack_id"`
 
-	// The Time-To-Live for this sandbox, if not given, this is up to the reaper
-	TTL *metav1.Duration `json:"ttl,omitempty"`
+	// The ExpirationDate for this sandbox, if not given, the reaper will use a default TTL
+	ExpirationDate *metav1.Time `json:"expiration_date,omitempty"`
+
+	// KeepAlive will prevent this sandbox from being reaped if no ExpirationDate is given.
+	KeepAlive bool `json:"keepalive" default:"false"`
 }
 
 // SandboxStatus defines the observed state of Sandbox
 type SandboxStatus struct {
-	NamespaceStatus *v1.NamespaceStatus `json:",omitempty"`
+	NamespaceStatus  *v1.NamespaceStatus `json:",omitempty"`
+	LastNotification *metav1.Time        `json:"last_notification,omitempty"`
 
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
