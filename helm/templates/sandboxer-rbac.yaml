@@ -32,6 +32,7 @@ rules:
   - devops.stackstate.com
   resources:
   - sandboxes
+  - sandboxes/status
   verbs: ["*"]
 - apiGroups: [""]
   resources:

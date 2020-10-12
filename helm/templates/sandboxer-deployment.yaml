@@ -14,6 +14,7 @@ spec:
       labels:
         app: {{ include "fullname.short" . }}
     spec:
+      serviceAccountName: {{ include "fullname.short" . }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.sandboxer.image }}"
