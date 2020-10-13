@@ -1,9 +1,9 @@
 package slack
 
 import (
-	"fmt"
-
+	"github.com/kelseyhightower/envconfig"
 	"github.com/slack-go/slack"
+	"github.com/stackvista/sandbox-operator/internal/notification"
 )
 
 type Config struct {
@@ -18,18 +18,25 @@ type Slacker struct {
 	config *Config
 }
 
-func NewSlacker(config *Config) *Slacker {
+var _ notification.Notifier = (*Slacker)(nil) // Compile-time check
+
+func NewSlacker() (*Slacker, error) {
+	config := &Config{}
+	if err := envconfig.Process("slack", config); err != nil {
+		return nil, err
+	}
+
 	return &Slacker{
 		client: slack.New(config.ApiKey),
 		config: config,
-	}
+	}, nil
 }
 
-// Post a message prefixing it with @user.
+// Post a message.
 // if channelID is given, will post to the given channelID, else it will be posted
 // to the default channelID
-func (s *Slacker) NotifyUser(slackID string, channelID string, message string) error {
-	msgOpts := s.constructMsgOpts(slackID, message)
+func (s *Slacker) Notify(channelID string, message string) error {
+	msgOpts := s.constructMsgOpts(message)
 
 	channel := channelID
 	if channelID != "" {
@@ -43,11 +50,10 @@ func (s *Slacker) NotifyUser(slackID string, channelID string, message string) e
 	return nil
 }
 
-func (s *Slacker) constructMsgOpts(slackID string, message string) []slack.MsgOption {
-	msg := fmt.Sprintf("<@%s>, "+message, slackID)
+func (s *Slacker) constructMsgOpts(message string) []slack.MsgOption {
 
 	msgOpts := []slack.MsgOption{
-		slack.MsgOptionText(msg, false),
+		slack.MsgOptionText(message, false),
 	}
 
 	if s.config.PostAsUser != "" {

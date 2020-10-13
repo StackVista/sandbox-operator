@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/spf13/cobra"
+	"github.com/stackvista/sandbox-operator/internal/notification/slack"
 	"github.com/stackvista/sandbox-operator/internal/reaper"
 )
 
@@ -16,7 +17,12 @@ func ReaperCommand() *cobra.Command {
 				return err
 			}
 
-			reaper, err := reaper.NewReaper(cmd.Context(), config)
+			slack, err := slack.NewSlacker()
+			if err != nil {
+				return err
+			}
+
+			reaper, err := reaper.NewReaper(cmd.Context(), config, slack)
 			if err != nil {
 				return err
 			}

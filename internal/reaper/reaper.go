@@ -1,10 +1,13 @@
 package reaper
 
 import (
+	"bytes"
 	"context"
+	"text/template"
 	"time"
 
 	"github.com/stackvista/sandbox-operator/internal/clock"
+	"github.com/stackvista/sandbox-operator/internal/notification"
 
 	"github.com/rs/zerolog/log"
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
@@ -12,26 +15,25 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/caspr-io/mu-kit/kubernetes"
-	"github.com/stackvista/sandbox-operator/internal/slack"
 )
 
 type Config struct {
-	DefaultTtl               time.Duration `split_words:"true" required:"true" default:"604800s"` // Default 1 week
-	FirstExpirationWarning   time.Duration `split_words:"true" required:"true" default:"259200s"` // Default 3 days
-	NotificationInterval     time.Duration `split_words:"true" required:"true" default:"86400s"`  // Default 1 day
+	DefaultTtl               time.Duration `split_words:"true" required:"true" default:"168h"` // Default 1 week
+	FirstExpirationWarning   time.Duration `split_words:"true" required:"true" default:"72h"`  // Default 3 days
+	WarningInterval          time.Duration `split_words:"true" required:"true" default:"24h"`  // Default 1 day
 	ExpirationWarningMessage string        `split_words:"true" required:"true"`
 	ReapMessage              string        `split_words:"true" required:"true"`
 	ExpirationOverdueMessage string        `split_words:"true" required:"true"`
-	Slack                    *slack.Config `split_words:"true" required:"true"`
 }
 
 // Reaper will reap sandboxes from the cluster.
 type Reaper struct {
 	sandboxClient *versioned.Clientset
 	config        *Config
+	notifier      notification.Notifier
 }
 
-func NewReaper(ctx context.Context, config *Config) (*Reaper, error) {
+func NewReaper(ctx context.Context, config *Config, notifier notification.Notifier) (*Reaper, error) {
 	logger := log.Ctx(ctx)
 	k8s, err := kubernetes.ConnectToKubernetes()
 	if err != nil {
@@ -42,6 +44,7 @@ func NewReaper(ctx context.Context, config *Config) (*Reaper, error) {
 	return &Reaper{
 		sandboxClient: versioned.New(k8s.Clientset.RESTClient()),
 		config:        config,
+		notifier:      notifier,
 	}, nil
 }
 
@@ -59,10 +62,39 @@ func (r *Reaper) Run(ctx context.Context) error {
 		if r.isExpired(ctx, sb) {
 			logger.Info().Str("sandbox", sb.Name).Msg("Sandbox is expired.")
 
-			return r.deleteAndNotify(ctx, sb)
+			if err := r.sandboxClient.DevopsV1().Sandboxes().Delete(ctx, sb.Name, v1.DeleteOptions{}); err != nil {
+				return err
+			}
+
+			if err := r.notify(ctx, r.config.ReapMessage, sb); err != nil {
+				return err
+			}
+
 		} else if r.isExpirationImminent(ctx, sb) {
-			logger.Info().Str("sandbox", sb.Name).Msg("Warning about imminent expiration")
-			// return r.notifyExpirationImminent(ctx, sb)
+			if r.shouldNotify(ctx, sb) {
+				logger.Info().Str("sandbox", sb.Name).Msg("Warning about imminent expiration")
+
+				if err := r.notify(ctx, r.config.ExpirationWarningMessage, sb); err != nil {
+					return err
+				}
+
+				if err := r.updateLastNotificationDate(ctx, sb); err != nil {
+					return err
+				}
+			}
+		} else if r.isExpirationOverdue(ctx, sb) {
+			if r.shouldNotify(ctx, sb) {
+				logger.Info().Str("sandbox", sb.Name).Msg("Keep-alive sandbox is overdue, notifying user")
+
+				if err := r.notify(ctx, r.config.ExpirationOverdueMessage, sb); err != nil {
+					return err
+				}
+
+				if err := r.updateLastNotificationDate(ctx, sb); err != nil {
+					return err
+				}
+			}
+
 		}
 	}
 
@@ -71,50 +103,101 @@ func (r *Reaper) Run(ctx context.Context) error {
 	return nil
 }
 
-func (r *Reaper) deleteAndNotify(ctx context.Context, sb devopsv1.Sandbox) error {
-	if err := r.sandboxClient.DevopsV1().Sandboxes().Delete(ctx, sb.Name, v1.DeleteOptions{}); err != nil {
+// notify uses the Reaper.notifier to notify that the Sandbox is either reaped, or will be reaped.
+func (r *Reaper) notify(ctx context.Context, message string, sb devopsv1.Sandbox) error {
+	msg, err := r.constructMessage(ctx, message, sb)
+	if err != nil {
 		return err
 	}
 
-	return slack.NewSlacker(r.config.Slack).NotifyUser(sb.Spec.SlackId, "", r.config.ReapMessage)
+	return r.notifier.Notify("", msg)
 }
 
-func (r *Reaper) expirationDate(ctx context.Context, sb devopsv1.Sandbox) *time.Time {
-	if sb.Spec.KeepAlive {
-		return nil // No expiration date if KeepAlive is set
+// updateLastNotificationDate updates the Sandbox.Status.LastNotification field with the date of `now`.
+func (r *Reaper) updateLastNotificationDate(ctx context.Context, sb devopsv1.Sandbox) error {
+	sb.Status.LastNotification = &v1.Time{Time: clock.Ctx(ctx).Now()}
+
+	if _, err := r.sandboxClient.DevopsV1().Sandboxes().UpdateStatus(ctx, &sb, v1.UpdateOptions{}); err != nil {
+		return err
 	}
 
+	return nil
+}
+
+func (r *Reaper) expirationDate(ctx context.Context, sb devopsv1.Sandbox) time.Time {
 	if sb.Spec.ExpirationDate != nil {
-		return &sb.Spec.ExpirationDate.Time
+		return sb.Spec.ExpirationDate.Time
 	} else {
-		t := sb.CreationTimestamp.Add(r.config.DefaultTtl)
-		return &t
+		return sb.CreationTimestamp.Add(r.config.DefaultTtl)
 	}
 }
 
 // isExpired checks whether the given Sandbox has expired its TTL
 func (r *Reaper) isExpired(ctx context.Context, sb devopsv1.Sandbox) bool {
-	expDate := r.expirationDate(ctx, sb)
-	if expDate == nil {
-		return false
+	if sb.Spec.KeepAlive {
+		return false // No expiration if KeepAlive is set
 	}
 
-	return clock.Ctx(ctx).Now().After(*expDate)
+	expDate := r.expirationDate(ctx, sb)
+
+	return clock.Ctx(ctx).Now().After(expDate)
 }
 
-// isExpirationImminent checks whether the user should be notified that expiration of the sandbox is imminent
+// isExpirationImminent checks whether the Sandbox will soon be reaped
 func (r *Reaper) isExpirationImminent(ctx context.Context, sb devopsv1.Sandbox) bool {
+	if sb.Spec.KeepAlive {
+		return false // No expiration if KeepAlive is set
+	}
+
 	expDate := r.expirationDate(ctx, sb)
-	if expDate == nil {
-		return false
-	}
-
 	now := clock.Ctx(ctx).Now()
-	if sb.Status.LastNotification == nil {
-		firstNotify := expDate.Add(-r.config.FirstExpirationWarning)
-		return now.After(firstNotify) || now.Equal(firstNotify)
+	warnDate := expDate.Add(-r.config.FirstExpirationWarning)
+
+	return now.After(warnDate) || now.Equal(warnDate)
+}
+
+// shouldNotify checks whether the Sandbox owner should be notified about a pending expiry
+func (r *Reaper) shouldNotify(ctx context.Context, sb devopsv1.Sandbox) bool {
+	expDate := r.expirationDate(ctx, sb)
+	now := clock.Ctx(ctx).Now()
+
+	notification := expDate.Add(-r.config.FirstExpirationWarning)
+	if sb.Status.LastNotification != nil {
+		notification = sb.Status.LastNotification.Add(r.config.WarningInterval)
 	}
 
-	nextNotify := sb.Status.LastNotification.Add(r.config.NotificationInterval)
-	return now.After(nextNotify) || now.Equal(nextNotify)
+	return now.After(notification) || now.Equal(notification)
+
+}
+
+// isExpirationOverdue checks whether a Sandbox that has Sandbox.Spec.KeepAlive set has passed its expiry.
+func (r *Reaper) isExpirationOverdue(ctx context.Context, sb devopsv1.Sandbox) bool {
+	if !sb.Spec.KeepAlive {
+		return false // If not KeepAlive, it is not overdue
+	}
+
+	expDate := r.expirationDate(ctx, sb)
+	now := clock.Ctx(ctx).Now()
+
+	return now.After(expDate) || now.Equal(expDate)
+}
+
+// constructMessage templates the configured message using the Sandbox as context.
+func (r *Reaper) constructMessage(ctx context.Context, message string, sb devopsv1.Sandbox) (string, error) {
+	m := map[string]interface{}{
+		"Sandbox":        sb,
+		"ExpirationDate": r.expirationDate(ctx, sb),
+	}
+
+	t, err := template.New("notification").Parse(message)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, m); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

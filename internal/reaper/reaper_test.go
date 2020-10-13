@@ -46,7 +46,42 @@ func TestExpiration(t *testing.T) {
 	}
 }
 
-func TestNotificationImminent(t *testing.T) {
+func TestExpirationImminent(t *testing.T) {
+	c := clk.NewMock()
+	ctx := clock.WithContext(context.Background(), c)
+	var tests = map[string]struct {
+		createdAgo   time.Duration
+		expiration   *time.Duration
+		notification *time.Duration
+		keepAlive    bool
+		isImminent   bool
+	}{
+		"Default TTL: Not imminent if not hit first notify point":             {-2 * Day, nil, nil, false, false},
+		"Default TTL: Imminent if hit first notify point":                     {-3 * Day, nil, nil, false, true},
+		"Default TTL: Not imminent if keep alive":                             {-3 * Day, nil, nil, true, false},
+		"Default TTL: Imminent if notified and not yet hit next notify point": {-4 * Day, nil, pDuration(-1 * Day), false, true},
+		"Default TTL: Imminent if hit next notify point":                      {-5 * Day, nil, pDuration(-2 * Day), false, true},
+		"Expiration date: Not imminent if not hit first notify point":         {-2 * Day, pDuration(5 * Day), nil, false, false},
+		"Expiration date: Imminent if hit first notify point":                 {-2 * Day, pDuration(4 * Day), nil, false, true},
+	}
+
+	reaper := &Reaper{
+		config: &Config{
+			DefaultTtl:             7 * Day,
+			FirstExpirationWarning: 4 * Day,
+			WarningInterval:        2 * Day,
+		},
+	}
+
+	for name, data := range tests {
+		t.Run(name, func(t *testing.T) {
+			sandbox := newSandbox(c, data.createdAgo, data.expiration, data.keepAlive)
+			sandbox.Status.LastNotification = newTime(pTime(c, data.notification))
+			assert.Equal(t, reaper.isExpirationImminent(ctx, sandbox), data.isImminent)
+		})
+	}
+}
+func TestExpirationNotification(t *testing.T) {
 	c := clk.NewMock()
 	ctx := clock.WithContext(context.Background(), c)
 	var tests = map[string]struct {
@@ -56,20 +91,20 @@ func TestNotificationImminent(t *testing.T) {
 		keepAlive    bool
 		isNotify     bool
 	}{
-		"Default TTL: No warning if not hit first notify point":                 {-2 * Day, nil, nil, false, false},
-		"Default TTL: Warning if hit first notify point":                        {-3 * Day, nil, nil, false, true},
-		"Default TTL: No warning if keep alive":                                 {-3 * Day, nil, nil, true, false},
-		"Default TTL: No warning if notified and not yet hit next notify point": {-4 * Day, nil, pDuration(-1 * Day), false, false},
-		"Default TTL: Warning if hit next notify point":                         {-5 * Day, nil, pDuration(-2 * Day), false, true},
-		"Expiration date: No warning if not hit first notify point":             {-2 * Day, pDuration(5 * Day), nil, false, false},
-		"Expiration date: Warning if hit first notify point":                    {-2 * Day, pDuration(4 * Day), nil, false, true},
+		"Default TTL: No notification if not hit first notify point":                 {-2 * Day, nil, nil, false, false},
+		"Default TTL: Notification if hit first notify point":                        {-3 * Day, nil, nil, false, true},
+		"Default TTL: Notification if keep alive and hit first notify point":         {-3 * Day, nil, nil, true, true},
+		"Default TTL: No notification if notified and not yet hit next notify point": {-4 * Day, nil, pDuration(-1 * Day), false, false},
+		"Default TTL: Notification if hit next notify point":                         {-5 * Day, nil, pDuration(-2 * Day), false, true},
+		"Expiration date: No notification if not hit first notify point":             {-2 * Day, pDuration(5 * Day), nil, false, false},
+		"Expiration date: Notification if hit first notify point":                    {-2 * Day, pDuration(4 * Day), nil, false, true},
 	}
 
 	reaper := &Reaper{
 		config: &Config{
 			DefaultTtl:             7 * Day,
 			FirstExpirationWarning: 4 * Day,
-			NotificationInterval:   2 * Day,
+			WarningInterval:        2 * Day,
 		},
 	}
 
@@ -77,9 +112,27 @@ func TestNotificationImminent(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			sandbox := newSandbox(c, data.createdAgo, data.expiration, data.keepAlive)
 			sandbox.Status.LastNotification = newTime(pTime(c, data.notification))
-			assert.Equal(t, reaper.isExpirationImminent(ctx, sandbox), data.isNotify)
+			assert.Equal(t, reaper.shouldNotify(ctx, sandbox), data.isNotify)
 		})
 	}
+}
+
+func TestConstructMessage(t *testing.T) {
+	reaper := &Reaper{
+		config: &Config{
+			ReapMessage: "Sandbox `{{ .Sandbox.Name }}` is about to be deleted.",
+		},
+	}
+
+	sb := devopsv1.Sandbox{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "test-1",
+		},
+	}
+
+	msg, err := reaper.constructMessage(context.Background(), reaper.config.ReapMessage, sb)
+	assert.NilError(t, err)
+	assert.Equal(t, msg, "Sandbox `test-1` is about to be deleted.")
 }
 
 func newSandbox(c clk.Clock, creation time.Duration, expiration *time.Duration, keepAlive bool) devopsv1.Sandbox {
