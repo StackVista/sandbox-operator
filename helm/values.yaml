@@ -20,7 +20,7 @@ reaper:
   messages:
     reapMessage: "<@{{ .Sandbox.Spec.SlackID }}>: Your sandbox `{{ .Sandbox.Name }}` has been reaped..."
     expirationWarning: "<@{{ .Sandbox.Spec.SlackID }}>: Your sandbox `{{ .Sandbox.Name }}` will expire on {{ .ExpirationDate }}"
-    expirationOverdue: "<@{{ .Sandbox.Spec.SlackID }}>: Your sandbox `{{ .Sandbox.Name }}` is being kept alive but has been running a long time, consider cleaning it up."
+    expirationOverdue: "<@{{ .Sandbox.Spec.SlackID }}>: Your sandbox `{{ .Sandbox.Name }}` cannot be automatically expired and has been running a long time, consider cleaning it up."
 
   slack:
     # The Slack API token

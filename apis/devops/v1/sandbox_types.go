@@ -37,8 +37,8 @@ type SandboxSpec struct {
 	// The ExpirationDate for this sandbox, if not given, the reaper will use a default TTL
 	ExpirationDate *metav1.Time `json:"expiration_date,omitempty"`
 
-	// KeepAlive will prevent this sandbox from being reaped if no ExpirationDate is given.
-	KeepAlive bool `json:"keepalive" default:"false"`
+	// ManualExpiry will prevent this sandbox from being reaped if no ExpirationDate is given.
+	ManualExpiry bool `json:"manual_expiry,omitempty" default:"false"`
 }
 
 // SandboxStatus defines the observed state of Sandbox

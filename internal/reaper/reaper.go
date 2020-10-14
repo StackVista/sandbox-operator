@@ -84,7 +84,7 @@ func (r *Reaper) Run(ctx context.Context) error {
 			}
 		} else if r.isExpirationOverdue(ctx, sb) {
 			if r.shouldNotify(ctx, sb) {
-				logger.Info().Str("sandbox", sb.Name).Msg("Keep-alive sandbox is overdue, notifying user")
+				logger.Info().Str("sandbox", sb.Name).Msg("Manual expiry sandbox is overdue, notifying user")
 
 				if err := r.notify(ctx, r.config.ExpirationOverdueMessage, sb); err != nil {
 					return err
@@ -134,7 +134,7 @@ func (r *Reaper) expirationDate(ctx context.Context, sb devopsv1.Sandbox) time.T
 
 // isExpired checks whether the given Sandbox has expired its TTL
 func (r *Reaper) isExpired(ctx context.Context, sb devopsv1.Sandbox) bool {
-	if sb.Spec.KeepAlive {
+	if sb.Spec.ManualExpiry {
 		return false // No expiration if KeepAlive is set
 	}
 
@@ -145,7 +145,7 @@ func (r *Reaper) isExpired(ctx context.Context, sb devopsv1.Sandbox) bool {
 
 // isExpirationImminent checks whether the Sandbox will soon be reaped
 func (r *Reaper) isExpirationImminent(ctx context.Context, sb devopsv1.Sandbox) bool {
-	if sb.Spec.KeepAlive {
+	if sb.Spec.ManualExpiry {
 		return false // No expiration if KeepAlive is set
 	}
 
@@ -172,7 +172,7 @@ func (r *Reaper) shouldNotify(ctx context.Context, sb devopsv1.Sandbox) bool {
 
 // isExpirationOverdue checks whether a Sandbox that has Sandbox.Spec.KeepAlive set has passed its expiry.
 func (r *Reaper) isExpirationOverdue(ctx context.Context, sb devopsv1.Sandbox) bool {
-	if !sb.Spec.KeepAlive {
+	if !sb.Spec.ManualExpiry {
 		return false // If not KeepAlive, it is not overdue
 	}
 

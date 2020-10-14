@@ -41,9 +41,9 @@ spec:
                 reaper will use a default TTL
               format: date-time
               type: string
-            keepalive:
-              description: KeepAlive will prevent this sandbox from being reaped if
-                no ExpirationDate is given.
+            manual_expiry:
+              description: ManualExpiry will prevent this sandbox from being reaped
+                if no ExpirationDate is given.
               type: boolean
             slack_id:
               description: The SlackID of the User, used to notify the user of cleanups
@@ -52,7 +52,6 @@ spec:
               description: The username to create a Sandbox for
               type: string
           required:
-          - keepalive
           - slack_id
           - user
           type: object
