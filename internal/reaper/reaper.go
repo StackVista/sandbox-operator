@@ -9,12 +9,13 @@ import (
 	"github.com/stackvista/sandbox-operator/internal/clock"
 	"github.com/stackvista/sandbox-operator/internal/notification"
 
+	home "github.com/mitchellh/go-homedir"
 	"github.com/rs/zerolog/log"
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 	"github.com/stackvista/sandbox-operator/pkg/client/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/caspr-io/mu-kit/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Config struct {
@@ -35,14 +36,30 @@ type Reaper struct {
 
 func NewReaper(ctx context.Context, config *Config, notifier notification.Notifier) (*Reaper, error) {
 	logger := log.Ctx(ctx)
-	k8s, err := kubernetes.ConnectToKubernetes()
+
+	cfg, err := rest.InClusterConfig()
+	if err != nil && err != rest.ErrNotInCluster {
+		return nil, err
+	} else if err != nil {
+		kubeconfig, err := home.Expand("~/.kube/config")
+		if err != nil {
+			return nil, err
+		}
+		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	client, err := versioned.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
+
 	logger.Info().Msg("Connected to Kubernetes")
 
 	return &Reaper{
-		sandboxClient: versioned.New(k8s.Clientset.RESTClient()),
+		sandboxClient: client,
 		config:        config,
 		notifier:      notifier,
 	}, nil
@@ -51,8 +68,11 @@ func NewReaper(ctx context.Context, config *Config, notifier notification.Notifi
 func (r *Reaper) Run(ctx context.Context) error {
 	logger := log.Ctx(ctx)
 
+	logger.Info().Msg("Going to list sandboxes...")
+
 	sandboxes, err := r.sandboxClient.DevopsV1().Sandboxes().List(ctx, v1.ListOptions{})
 	if err != nil {
+		logger.Error().Err(err).Msg("Error while listing sandboxes")
 		return err
 	}
 

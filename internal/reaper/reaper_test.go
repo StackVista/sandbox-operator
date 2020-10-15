@@ -142,7 +142,7 @@ func newSandbox(c clk.Clock, creation time.Duration, expiration *time.Duration, 
 		},
 		Spec: devopsv1.SandboxSpec{
 			ExpirationDate: newTime(pTime(c, expiration)),
-			KeepAlive:      keepAlive,
+			ManualExpiry:   keepAlive,
 		},
 	}
 }
