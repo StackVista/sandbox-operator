@@ -8,6 +8,7 @@ spec:
     spec:
       template:
         spec:
+          serviceAccountName: {{ include "fullname.short" . }}
           containers:
           - name: {{ include "fullname.short" . }}
             image: {{ .Values.reaper.image }}
@@ -21,12 +22,11 @@ spec:
             - name: WARNING_INTERVAL
               value: {{ .Values.reaper.warningInterval }}
             - name: REAP_MESSAGE
-              value: {{ .Values.reaper.messages.reapMessage }}
+              value: {{ .Values.reaper.messages.reapMessage | quote }}
             - name: EXPIRATION_WARNING_MESSAGE
-              value: {{ .Values.reaper.messages.expirationWarning }}
+              value: {{ .Values.reaper.messages.expirationWarning | quote }}
             - name: EXPIRATION_OVERDUE_MESSAGE
-              value: {{ .Values.reaper.messages.expirationOverdue }}
-            - name:
+              value: {{ .Values.reaper.messages.expirationOverdue | quote }}
             - name: SLACK_API_KEY
               valueFrom:
                 secretKeyRef:
