@@ -7,6 +7,7 @@ import (
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 )
 
+// Construct the name of the actual Sandbox that is created based on the CRD
 func SandboxName(sandbox *devopsv1.Sandbox) string {
 	name := "sandbox"
 	if !strings.HasPrefix(sandbox.Name, sandbox.Spec.User) {
