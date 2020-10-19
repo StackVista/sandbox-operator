@@ -19,7 +19,8 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
+
+	pkgsandbox "github.com/stackvista/sandbox-operator/pkg/sandbox"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -62,7 +63,7 @@ func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	namespaceName := r.constructNamespaceName(sandbox)
+	namespaceName := pkgsandbox.SandboxName(sandbox)
 
 	ns, err := r.findNamespace(ctx, namespaceName)
 	if err != nil {
@@ -103,17 +104,6 @@ func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *SandboxReconciler) constructNamespaceName(sandbox *devopsv1.Sandbox) string {
-	name := "sandbox"
-	if !strings.HasPrefix(sandbox.Name, sandbox.Spec.User) {
-		name = fmt.Sprintf("%s-%s", name, sandbox.Spec.User)
-	}
-
-	name = fmt.Sprintf("%s-%s", name, sandbox.Name)
-
-	return name
 }
 
 func (r *SandboxReconciler) findNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {

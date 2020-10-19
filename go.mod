@@ -12,13 +12,13 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rs/zerolog v1.20.0
-	github.com/slack-go/slack v0.6.6
-	github.com/spf13/cobra v1.0.0
+	github.com/slack-go/slack v0.7.2
+	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1 // indirect
 	go.uber.org/zap v1.16.0
-	golang.org/x/tools v0.0.0-20200213224642-88e652f7a869 // indirect
+	golang.org/x/tools v0.0.0-20201017001424-6003fad69a88 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
-	gotest.tools/v3 v3.0.2
+	gotest.tools/v3 v3.0.3
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2
 	k8s.io/client-go v0.19.2
