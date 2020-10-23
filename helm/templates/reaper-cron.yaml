@@ -10,7 +10,7 @@ spec:
         spec:
           serviceAccountName: {{ include "fullname.short" . }}
           containers:
-          - name: {{ include "fullname.short" . }}
+          - name: reaper
             image: {{ .Values.reaper.image }}
             args:
             - reaper
@@ -34,4 +34,18 @@ spec:
                   key: slackApiKey
             - name: SLACK_CHANNEL_ID
               value: {{ .Values.reaper.slack.channelID }}
+            resources:
+{{ toYaml .Values.reaper.resources | indent 14 }}
           restartPolicy: OnFailure
+{{- if .Values.reaper.nodeSelector }}
+          nodeSelector:
+{{ toYaml .Values.reaper.nodeSelector | indent 12 }}
+{{- end }}
+{{- if .Values.reaper.tolerations }}
+          tolerations:
+{{ toYaml .Values.reaper.tolerations | indent 12 }}
+{{- end }}
+{{- if .Values.reaper.affinity }}
+          affinity:
+{{ toYaml .Values.reaper.affinity | indent 12 }}
+{{- end }}
