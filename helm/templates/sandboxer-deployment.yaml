@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccountName: {{ include "fullname.short" . }}
       containers:
-      - name: {{ .Chart.Name }}
+      - name: sandboxer
         image: "{{ .Values.sandboxer.image }}"
         imagePullPolicy: IfNotPresent
         resources:

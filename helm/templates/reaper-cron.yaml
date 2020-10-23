@@ -10,7 +10,7 @@ spec:
         spec:
           serviceAccountName: {{ include "fullname.short" . }}
           containers:
-          - name: {{ include "fullname.short" . }}
+          - name: reaper
             image: {{ .Values.reaper.image }}
             args:
             - reaper
