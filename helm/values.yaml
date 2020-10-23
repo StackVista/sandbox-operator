@@ -2,6 +2,19 @@
 sandboxer:
   image: ghcr.io/stackvista/sandboxer:latest
 
+  # nodeSelector:
+  #   node.kubernetes.io/purpose-core: "yes"
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+  # tolerations:
+  # - effect: NoSchedule
+  #   operator: Exists
+
 reaper:
   image: ghcr.io/stackvista/sandboxer:latest
 
@@ -27,4 +40,17 @@ reaper:
     apiKey: ""
     # The Slack Channel ID to post in (Can be an ID or the channel name prefixed with a '#')
     channelID: ""
+
+  # nodeSelector:
+  #   node.kubernetes.io/purpose-core: "yes"
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+  # tolerations:
+  # - effect: NoSchedule
+  #   operator: Exists
 

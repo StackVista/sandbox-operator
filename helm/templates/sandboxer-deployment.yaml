@@ -20,4 +20,16 @@ spec:
         image: "{{ .Values.sandboxer.image }}"
         imagePullPolicy: IfNotPresent
         resources:
-{{ toYaml .Values.resources | indent 10 }}
+{{ toYaml .Values.sandboxer.resources | indent 10 }}
+{{- if .Values.sandboxer.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.sandboxer.nodeSelector | indent 8 }}
+{{- end }}
+{{- if .Values.sandboxer.tolerations }}
+      tolerations:
+{{ toYaml .Values.sandboxer.tolerations | indent 8 }}
+{{- end }}
+{{- if .Values.sandboxer.affinity }}
+      affinity:
+{{ toYaml .Values.sandboxer.affinity | indent 8 }}
+{{- end }}
