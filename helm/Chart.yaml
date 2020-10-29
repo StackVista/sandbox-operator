@@ -1,4 +1,0 @@
-apiVersion: v1
-name: "sandboxer"
-description: "The StackState Sandboxer"
-version: 0.1.0
