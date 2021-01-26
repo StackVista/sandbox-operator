@@ -91,14 +91,19 @@ func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{}, err
 		}
 
-		sandbox.Status.NamespaceStatus = &newNs.Status
+		log.WithValues("status.phase", newNs.Status.Phase).Info("Created namespace is now...")
+
+		sandbox.Status.NamespaceStatus = newNs.Status
 		if err := r.Status().Update(ctx, sandbox); err != nil {
+			log.Error(err, "Unable to update sandbox status")
 			return ctrl.Result{}, err
 		}
 	} else {
-		if sandbox.Status.NamespaceStatus != nil && sandbox.Status.NamespaceStatus.Phase == v1.NamespaceActive {
+		if sandbox.Status.NamespaceStatus.Phase == v1.NamespaceActive {
 			return ctrl.Result{}, nil
 		}
+
+		log.WithValues("status.phase", sandbox.Status.NamespaceStatus.Phase).Info("Namespace exists, but sandbox status is not Active")
 
 		return ctrl.Result{}, fmt.Errorf("Namespace for sandbox already exists")
 	}

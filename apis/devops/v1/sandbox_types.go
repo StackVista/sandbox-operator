@@ -43,8 +43,8 @@ type SandboxSpec struct {
 
 // SandboxStatus defines the observed state of Sandbox
 type SandboxStatus struct {
-	NamespaceStatus  *v1.NamespaceStatus `json:",omitempty"`
-	LastNotification *metav1.Time        `json:"last_notification,omitempty"`
+	NamespaceStatus  v1.NamespaceStatus `json:",omitempty"`
+	LastNotification *metav1.Time       `json:"last_notification,omitempty"`
 
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
