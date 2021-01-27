@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 )
@@ -44,8 +45,7 @@ type SandboxReconciler struct {
 // +kubebuilder:rbac:groups=devops.stackstate.com,resources=sandboxes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=devops.stackstate.com,resources=sandboxes/status,verbs=get;update;patch
 
-func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *SandboxReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("sandbox", req.NamespacedName)
 
 	sandbox := &devopsv1.Sandbox{}
@@ -92,9 +92,11 @@ func (r *SandboxReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		log.WithValues("status.phase", newNs.Status.Phase).Info("Created namespace is now...")
-
-		sandbox.Status.NamespaceStatus = newNs.Status
-		if err := r.Status().Update(ctx, sandbox); err != nil {
+		_, err = controllerutil.CreateOrUpdate(ctx, r.Client, sandbox.DeepCopy(), func() error {
+			sandbox.Status.NamespaceStatus = newNs.Status
+			return r.Client.Status().Update(ctx, sandbox, &client.UpdateOptions{})
+		})
+		if err != nil {
 			log.Error(err, "Unable to update sandbox status")
 			return ctrl.Result{}, err
 		}
