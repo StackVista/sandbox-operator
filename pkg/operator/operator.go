@@ -1,21 +1,19 @@
-package sandbox
+//nolint:gochecknoinits
+package operator
 
 import (
 	"context"
 	"os"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-
-	ctrl "sigs.k8s.io/controller-runtime"
+	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 
 	"github.com/butonic/zerologr"
 	"github.com/rs/zerolog/log"
-	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-
-	devopscontroller "github.com/stackvista/sandbox-operator/controllers/devops"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp" // Blank import GCP AuthProvider
+	ctrl "sigs.k8s.io/controller-runtime"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -29,15 +27,16 @@ func init() {
 
 	utilruntime.Must(devopsv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
-}
+} //nolint:wsl
 
-type OperatorConfig struct {
+type Config struct {
 	MetricsAddr          string
 	EnableLeaderElection bool
 }
 
-func StartOperator(ctx context.Context, config *OperatorConfig) error {
+func StartOperator(ctx context.Context, config *Config, reconcilerFactory ReconcilerFactory) error {
 	logger := log.Ctx(ctx)
+
 	ctrl.SetLogger(zerologr.NewWithOptions(zerologr.Options{
 		Logger: logger,
 	}))
@@ -47,28 +46,30 @@ func StartOperator(ctx context.Context, config *OperatorConfig) error {
 		MetricsBindAddress: config.MetricsAddr,
 		Port:               9443,
 		LeaderElection:     config.EnableLeaderElection,
-		LeaderElectionID:   "6221cfa4.devopserator.stackstate.com",
-		Namespace:          "",
+		LeaderElectionID:   "sandboxer.stackstate.com",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	if err = (&devopscontroller.SandboxReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Sandbox"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Sandbox")
+	r, err := reconcilerFactory.NewReconciler(ctx, mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create reconciler", "reconciler", "Tenant")
+		os.Exit(1)
+	}
+
+	if err := r.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Tenant")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
+
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
-		return err
+		os.Exit(1)
 	}
 
 	return nil

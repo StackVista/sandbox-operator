@@ -14,12 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package devops
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/stackvista/sandbox-operator/internal/config"
+	"github.com/stackvista/sandbox-operator/pkg/operator"
 	pkgsandbox "github.com/stackvista/sandbox-operator/pkg/sandbox"
 
 	"github.com/go-logr/logr"
@@ -33,7 +35,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
+	mgr "sigs.k8s.io/controller-runtime/pkg/manager"
 )
+
+type SandboxReconcilerFactory struct {
+	Config *config.Config
+}
+
+func (f *SandboxReconcilerFactory) NewReconciler(ctx context.Context, mgr mgr.Manager) (operator.Reconciler, error) {
+	return &SandboxReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Sandbox"),
+		Scheme: mgr.GetScheme(),
+	}, nil
+}
 
 // SandboxReconciler reconciles a Sandbox object
 type SandboxReconciler struct {

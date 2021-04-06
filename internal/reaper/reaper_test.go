@@ -8,6 +8,7 @@ import (
 	clk "github.com/benbjohnson/clock"
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 	"github.com/stackvista/sandbox-operator/internal/clock"
+	"github.com/stackvista/sandbox-operator/internal/config"
 	"gotest.tools/v3/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -33,7 +34,7 @@ func TestExpiration(t *testing.T) {
 	}
 
 	reaper := &Reaper{
-		config: &Config{
+		config: &config.ReaperConfig{
 			DefaultTtl: 2 * Day,
 		},
 	}
@@ -66,7 +67,7 @@ func TestExpirationImminent(t *testing.T) {
 	}
 
 	reaper := &Reaper{
-		config: &Config{
+		config: &config.ReaperConfig{
 			DefaultTtl:             7 * Day,
 			FirstExpirationWarning: 4 * Day,
 			WarningInterval:        2 * Day,
@@ -101,7 +102,7 @@ func TestExpirationNotification(t *testing.T) {
 	}
 
 	reaper := &Reaper{
-		config: &Config{
+		config: &config.ReaperConfig{
 			DefaultTtl:             7 * Day,
 			FirstExpirationWarning: 4 * Day,
 			WarningInterval:        2 * Day,
@@ -119,7 +120,7 @@ func TestExpirationNotification(t *testing.T) {
 
 func TestConstructMessage(t *testing.T) {
 	reaper := &Reaper{
-		config: &Config{
+		config: &config.ReaperConfig{
 			ReapMessage: "Sandbox `{{ .Sandbox.Name }}` is about to be deleted.",
 		},
 	}

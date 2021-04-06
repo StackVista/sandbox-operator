@@ -7,48 +7,29 @@ import (
 	"time"
 
 	"github.com/stackvista/sandbox-operator/internal/clock"
+	"github.com/stackvista/sandbox-operator/internal/config"
 	"github.com/stackvista/sandbox-operator/internal/notification"
 
-	home "github.com/mitchellh/go-homedir"
 	"github.com/rs/zerolog/log"
 	devopsv1 "github.com/stackvista/sandbox-operator/apis/devops/v1"
 	"github.com/stackvista/sandbox-operator/pkg/client/versioned"
+	"github.com/stackvista/sandbox-operator/pkg/kubernetes"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
-
-type Config struct {
-	DefaultTtl               time.Duration `split_words:"true" required:"true" default:"168h"` // Default 1 week
-	FirstExpirationWarning   time.Duration `split_words:"true" required:"true" default:"72h"`  // Default 3 days
-	WarningInterval          time.Duration `split_words:"true" required:"true" default:"24h"`  // Default 1 day
-	ExpirationWarningMessage string        `split_words:"true" required:"true"`
-	ReapMessage              string        `split_words:"true" required:"true"`
-	ExpirationOverdueMessage string        `split_words:"true" required:"true"`
-}
 
 // Reaper will reap sandboxes from the cluster.
 type Reaper struct {
 	sandboxClient *versioned.Clientset
-	config        *Config
+	config        *config.ReaperConfig
 	notifier      notification.Notifier
 }
 
-func NewReaper(ctx context.Context, config *Config, notifier notification.Notifier) (*Reaper, error) {
+func NewReaper(ctx context.Context, config *config.ReaperConfig, notifier notification.Notifier) (*Reaper, error) {
 	logger := log.Ctx(ctx)
 
-	cfg, err := rest.InClusterConfig()
-	if err != nil && err != rest.ErrNotInCluster {
+	cfg, err := kubernetes.LoadConfig()
+	if err != nil {
 		return nil, err
-	} else if err != nil {
-		kubeconfig, err := home.Expand("~/.kube/config")
-		if err != nil {
-			return nil, err
-		}
-		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	client, err := versioned.NewForConfig(cfg)

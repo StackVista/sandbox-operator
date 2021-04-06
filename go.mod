@@ -6,9 +6,10 @@ require (
 	cloud.google.com/go v0.75.0 // indirect
 	github.com/benbjohnson/clock v1.1.0
 	github.com/butonic/zerologr v0.0.0-20191210074216-d798ee237d84
+	github.com/creasty/defaults v1.5.1
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
-	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/hierynomus/taipan v1.1.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rs/zerolog v1.20.0
 	github.com/slack-go/slack v0.8.0
