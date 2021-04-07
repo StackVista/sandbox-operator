@@ -20,11 +20,11 @@ import (
 // Reaper will reap sandboxes from the cluster.
 type Reaper struct {
 	sandboxClient *versioned.Clientset
-	config        *config.ReaperConfig
+	config        config.ReaperConfig
 	notifier      notification.Notifier
 }
 
-func NewReaper(ctx context.Context, config *config.ReaperConfig, notifier notification.Notifier) (*Reaper, error) {
+func NewReaper(ctx context.Context, config config.ReaperConfig, notifier notification.Notifier) (*Reaper, error) {
 	logger := log.Ctx(ctx)
 
 	cfg, err := kubernetes.LoadConfig()

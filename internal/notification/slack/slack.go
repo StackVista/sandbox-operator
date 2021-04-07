@@ -8,12 +8,12 @@ import (
 
 type Slacker struct {
 	client *slack.Client
-	config *config.SlackConfig
+	config config.SlackConfig
 }
 
 var _ notification.Notifier = (*Slacker)(nil) // Compile-time check
 
-func NewSlacker(config *config.SlackConfig) (*Slacker, error) {
+func NewSlacker(config config.SlackConfig) (*Slacker, error) {
 	return &Slacker{
 		client: slack.New(config.ApiKey),
 		config: config,

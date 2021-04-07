@@ -3,13 +3,13 @@ package config
 import (
 	"time"
 
-	"github.com/creasty/defaults"
+	"github.com/mcuadros/go-defaults"
 )
 
 type Config struct {
-	Slack  *SlackConfig  `yaml:"slack"`
-	Reaper *ReaperConfig `yaml:"reaper"`
-	Scaler *ScalerConfig `yaml:"scaler"`
+	Slack  SlackConfig  `yaml:"slack"`
+	Reaper ReaperConfig `yaml:"reaper"`
+	Scaler ScalerConfig `yaml:"scaler"`
 }
 
 type ReaperConfig struct {
@@ -34,9 +34,7 @@ type ScalerConfig struct {
 }
 
 func (s *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if err := defaults.Set(s); err != nil {
-		return err
-	}
+	defaults.SetDefaults(s)
 
 	type cfg Config
 

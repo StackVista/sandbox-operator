@@ -34,7 +34,7 @@ func TestExpiration(t *testing.T) {
 	}
 
 	reaper := &Reaper{
-		config: &config.ReaperConfig{
+		config: config.ReaperConfig{
 			DefaultTtl: 2 * Day,
 		},
 	}
@@ -67,7 +67,7 @@ func TestExpirationImminent(t *testing.T) {
 	}
 
 	reaper := &Reaper{
-		config: &config.ReaperConfig{
+		config: config.ReaperConfig{
 			DefaultTtl:             7 * Day,
 			FirstExpirationWarning: 4 * Day,
 			WarningInterval:        2 * Day,
@@ -102,7 +102,7 @@ func TestExpirationNotification(t *testing.T) {
 	}
 
 	reaper := &Reaper{
-		config: &config.ReaperConfig{
+		config: config.ReaperConfig{
 			DefaultTtl:             7 * Day,
 			FirstExpirationWarning: 4 * Day,
 			WarningInterval:        2 * Day,
@@ -120,7 +120,7 @@ func TestExpirationNotification(t *testing.T) {
 
 func TestConstructMessage(t *testing.T) {
 	reaper := &Reaper{
-		config: &config.ReaperConfig{
+		config: config.ReaperConfig{
 			ReapMessage: "Sandbox `{{ .Sandbox.Name }}` is about to be deleted.",
 		},
 	}
