@@ -13,22 +13,24 @@ type Config struct {
 }
 
 type ReaperConfig struct {
-	DefaultTtl               time.Duration `yaml:"defaultTtl" default:"168h"`            // Default 1 week
-	FirstExpirationWarning   time.Duration `yaml:"firstExpirationWarning" default:"72h"` // Default 3 days
-	WarningInterval          time.Duration `yaml:"warningInterval" default:"24h"`        // Default 1 day
-	ExpirationWarningMessage string        `yaml:"expirationWarningMessage"`
-	ReapMessage              string        `yaml:"reapMessage"`
-	ExpirationOverdueMessage string        `yaml:"expirationOverdueMessage"`
+	DefaultTtl               time.Duration `yaml:"default-ttl" default:"168h"`             // Default 1 week
+	FirstExpirationWarning   time.Duration `yaml:"first-expiration-warning" default:"72h"` // Default 3 days
+	WarningInterval          time.Duration `yaml:"warning-interval" default:"24h"`         // Default 1 day
+	ExpirationWarningMessage string        `yaml:"expiration-warning-message"`
+	ReapMessage              string        `yaml:"reap-message"`
+	ExpirationOverdueMessage string        `yaml:"expiration-overdue-message"`
 }
 
 type SlackConfig struct {
-	ApiKey        string `yaml:"apiKey"`
-	ChannelID     string `yaml:"channelID"`
-	PostAsUser    string `yaml:"postAsUser"`
-	PostAsIconURL string `yaml:"postAsIconURL"`
+	ApiKey        string `yaml:"api-key"`
+	ChannelID     string `yaml:"channel-id"`
+	PostAsUser    string `yaml:"post-as-user"`
+	PostAsIconURL string `yaml:"post-as-icon-url"`
 }
 
 type ScalerConfig struct {
+	ScaleInterval    time.Duration `yaml:"scale-interval" default:"4h"`
+	SystemNamespaces []string      `yaml:"system-namespaces" default:"kube-system,kube-public,kube-node-lease"`
 }
 
 func (s *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

@@ -18,22 +18,21 @@ func RootCommand() *cobra.Command {
 }
 
 func Execute(ctx context.Context) {
-	config := &config.Config{}
-
+	cfg := &config.Config{}
 	tp := taipan.New(&taipan.Config{
 		DefaultConfigName:  "config",
 		ConfigurationPaths: []string{".", "conf.d"},
 		EnvironmentPrefix:  "SB",
 		AddConfigFlag:      true,
-		ConfigObject:       config,
+		ConfigObject:       cfg,
 	})
 
 	cmd := RootCommand()
-	cmd.AddCommand(SandboxCommand(config))
-	cmd.AddCommand(ReaperCommand(config))
-	cmd.AddCommand(ScalerCommand(config))
-
+	cmd.AddCommand(SandboxCommand(cfg))
+	cmd.AddCommand(ReaperCommand(cfg))
+	cmd.AddCommand(ScalerCommand(cfg))
 	tp.Inject(cmd)
+
 	if err := cmd.ExecuteContext(ctx); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
